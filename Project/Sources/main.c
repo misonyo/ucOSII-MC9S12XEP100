@@ -68,6 +68,7 @@ void  TaskStart (void *pdata)
  
  	SHELL_Init();
     Cmd_Init();
+    DFlash_init();
     OSTaskCreate(SHELL_Mainloop, (void *)0, &TaskShellStk[TASK_STK_SIZE - 1], 1);
        
     EnableInterrupts;

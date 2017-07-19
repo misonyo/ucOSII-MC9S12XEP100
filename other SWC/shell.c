@@ -34,7 +34,7 @@
 
 /* The maximum number of arguments when calling a shell function */
 
-#define MAX_ARGS		10
+#define MAX_ARGS		32
 #define CMDLINE_MAX		128
 
 
@@ -221,9 +221,7 @@ int SHELL_RunCmd(const char *cmdArgs, int *cmdRv ) {
 	int argc = 0;
 	char *argv[MAX_ARGS];
 	char *arg;
-
 	*cmdRv = 1;
-
 	//SHELL_printf("run cmd '%s'",cmdArgs);
 
 	/* Remove backspace */
@@ -258,26 +256,25 @@ int SHELL_RunCmd(const char *cmdArgs, int *cmdRv ) {
 	}
 
 	/* Check arg count and deliver them into argc and argv */
-	if (runCmd != NULL) {
+	if (runCmd != NULL)
+	{
 		/* Add the cmd */
 		argv[0] = cmdStr;
 		argc++;
-
-		while( (arg = strtokAndTrim(NULL, delim, &token_r)) != NULL ) {
+		while( (arg = strtokAndTrim(NULL, delim, &token_r)) != NULL )
+		{
 			assert(argc<MAX_ARGS);
-
 			if(NULL == arg)
 			{
 				printf("error when parse arg\n");
 				return SHELL_E_CMD_IS_NULL;
 			}
-
 			argv[argc++] = arg;
 		}
-
 		*cmdRv = runCmd->func(argc, argv);
-
-	} else {
+	}
+	else
+	{
 		SHELL_printf("No such command:\"%s\",strlen=%d\n",cmdStr,(int)strlen(cmdStr));
 		return SHELL_E_NO_SUCH_CMD;
 	}
@@ -304,7 +301,7 @@ int SHELL_Mainloop( void ) {
 			lineIndex = 0;
 		}
 
-		if( c == '\b')	/* ÍË¸ñ */ 
+		if( (c == '\b') || (c == 127))	/* ÍË¸ñ */ 
 		{
 			lineIndex--;
 			SHELL_putc(c);
