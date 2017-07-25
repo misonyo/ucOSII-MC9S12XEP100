@@ -2,7 +2,8 @@
 #include "derivative.h"      /* derivative-specific definitions */
 #include "includes.h"
 #include "shell.h"
-
+#include "flash.h"
+#include "ff.h"
 
 
 #define  TASK_STK_SIZE                 512       /* Size of each task's stacks (# of WORDs)            */
@@ -18,6 +19,7 @@ OS_STK        TaskShellStk[TASK_STK_SIZE];
 OS_FLAG_GRP* TaskEventFlag;
 OS_EVENT *mbox;
 
+static FATFS FatFs;
 /*
 *********************************************************************************************************
 *                                              STARTUP TASK
@@ -44,12 +46,16 @@ void  TaskEvent (void *pdata)
 void  TaskStart (void *pdata)
 {
     INT8U err;
+    tFlashParam FlashInit;
 #if OS_CRITICAL_METHOD == 3                                /* Allocate storage for CPU status register */
     OS_CPU_SR  cpu_sr;
 #endif
 
     pdata = pdata;                                         /* Prevent compiler warning                 */
-   
+
+    FlashInit.patchlevel=0x00;
+    FlashInit.minornumber=0x01;
+    FlashInit.majornumber=0x01;
     OS_ENTER_CRITICAL();
     PC_VectSet(0x08, OSTickISR);                           /* Install uC/OS-II's clock tick ISR        */
     PC_SetTickRate(OS_TICKS_PER_SEC);                      /* Reprogram tick rate                      */
@@ -65,10 +71,32 @@ void  TaskStart (void *pdata)
     atd_init();
     pwm_init();
     sci_init();
+    f_mount(&FatFs, "", 1);
  
+ // smaple FatFS test
+	{ // read	
+	char buffer[64];
+	static int tstnbr = 0;
+	FIL fil;
+	UINT len=0;
+
+	f_open(&fil,"hello.txt",FA_READ);
+	f_read(&fil,buffer,sizeof(buffer)-1,&len);
+	buffer[len] = 0;
+	printf(">> FatFS test read: '%s'\n",buffer);
+	f_close(&fil);
+	}
+	{  // write
+    FIL fil;
+	char* str="Test Write Of FatFs\n";
+	f_open(&fil,"FatFs.txt",FA_READ|FA_WRITE|FA_CREATE_ALWAYS);
+	f_write(&fil,str,strlen(str),&len);
+	f_close(&fil);
+   }
+ // end FatFA test
  	SHELL_Init();
     Cmd_Init();
-    DFlash_init();
+    DFlashInit(&FlashInit);
     OSTaskCreate(SHELL_Mainloop, (void *)0, &TaskShellStk[TASK_STK_SIZE - 1], 1);
        
     EnableInterrupts;

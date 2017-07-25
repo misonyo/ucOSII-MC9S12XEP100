@@ -11,118 +11,120 @@ static char lasc[13];
 
 static uint8_t ctoi(char ch)	/*char to integer*/
 {
-    if(isdigit(ch))
+	if(isdigit(ch))
+	{
 		return ch - 48;
-    else if((ch >='A') && (ch <='F') || (ch >='a') && (ch <='f') )
-       return isupper(ch) ? ch - 55 : ch - 87;
-    else
-    {
-    	printf("the char is invalid!\n");
-    	return 0;
-    }   	   	
+	}
+	else if((ch >='A') && (ch <='F') || (ch >='a') && (ch <='f') )
+	{
+	   return isupper(ch) ? ch - 55 : ch - 87;
+	}
+	else
+	{
+		printf("the char is invalid!\n");
+		return 0;
+	}
 }
 
 static uint16_t atoiM(char *str) 	/*char string to integer*/
 {
 	uint16_t len;
-    uint16_t value = 0;
-    uint16_t i;
-    len = strlen(str);
-    for (i=0; i<len; i++)
-    {
-        value=value*10+ctoi( *(str + i) );
-    }
-    return value;	
+	uint16_t value = 0;
+	uint16_t i;
+	len = strlen(str);
+	for (i=0; i<len; i++)
+	{
+		value=value*10+ctoi( *(str + i) );
+	}
+	return value;
 }
 static uint32_t atoh(char *str)	/*hex string to hex integer*/
 {
 	uint32_t len;
-    uint32_t value = 0;
-    uint32_t i;
-    len = strlen(str);
-    for (i=0; i<len; i++)
-    {
-        value=value*16+ctoi( *(str + i) );
-    }
-    return value;	
+	uint32_t value = 0;
+	uint32_t i;
+	len = strlen(str);
+	for (i=0; i<len; i++)
+	{
+		value=value*16+ctoi( *(str + i) );
+	}
+	return value;
 }
 static char* htoa(int32_t value)	/*hex integer to hex string*/
 {
-    int32_t i;
-    int sign = 0;
-    int32_t absv;    
-    if(value < 0)
-    {
-    	sign = 1;
-    	absv = -value;
-    }
-    else
-    {
-    	sign = 0;
-    	absv = value;    	
-    }   
-    for(i=11;i>0;i--)
-    {
-    	if(absv%16 >= 10)
-    	{
-    	 	lasc[i] = 55 + (absv%16);
-    	 	absv = absv/16;
-    	}		
-    	else
-    	{
-    	 	lasc[i] = 48 + (absv%16);
-    	 	absv = absv/16;
-    	}
-    	if(0 == absv) break;
-    }    
-    if(sign)
-    {
-    	lasc[--i] = '-';
-    }
-    
-    lasc[12] = '\0';
+	int32_t i;
+	int sign = 0;
+	int32_t absv;
+	if(value < 0)
+	{
+		sign = 1;
+		absv = -value;
+	}
+	else
+	{
+		sign = 0;
+		absv = value;
+	}
+	for(i=11;i>0;i--)
+	{
+		if(absv%16 >= 10)
+		{
+			lasc[i] = 55 + (absv%16);
+			absv = absv/16;
+		}
+		else
+		{
+			lasc[i] = 48 + (absv%16);
+			absv = absv/16;
+		}
+		if(0 == absv) break;
+	}
+	if(sign)
+	{
+		lasc[--i] = '-';
+	}
+	lasc[12] = '\0';
 	return &lasc[i];
 }
 static char* ltoa(int32_t v)
 {
-    int32_t i;
-    int sign = 0;
-    uint32_t absv;    
-    if(v < 0)
-    {
-    	sign = 1;
-    	absv = -v;
-    }
-    else
-    {
-    	sign = 0;
-    	absv = v;    	
-    }   
-    for(i=11;i>0;i--)
-    {
-    	lasc[i] = '0' + (absv%10);
-    	absv = absv/10;   	
-    	if(0 == absv) break;
-    }    
-    if(sign)
-    {
-    	lasc[--i] = '-';
-    }
-    
-    lasc[12] = '\0';
+	int32_t i;
+	int sign = 0;
+	uint32_t absv;
+	if(v < 0)
+	{
+		sign = 1;
+		absv = -v;
+	}
+	else
+	{
+		sign = 0;
+		absv = v;
+	}
+	for(i=11;i>0;i--)
+	{
+		lasc[i] = '0' + (absv%10);
+		absv = absv/10;
+		if(0 == absv) break;
+	}
+	if(sign)
+	{
+		lasc[--i] = '-';
+	}
+	lasc[12] = '\0';
 	return &lasc[i];
 }
 
 static void evalFunc(int argc, char *argv[] )
- {
+{
 	char *expr = argv[1];
-    int32_t result;
+	int32_t result;
 	result = eval(&expr);
 	expr = ltoa(result);
 	puts(expr);
 }
 static ShellCmdT evalInfo=
- {
+{
 		evalFunc,
 		2,2,
 		"eval",
@@ -152,69 +154,101 @@ static ShellCmdT ledInfo= {
 
 static void dEraseFunc(int argc, char *argv[] ) 
 {
-	DFlash_erase(atoh(argv[1]));		 	
+	tFlashParam erase;
+	erase.address=atoh(argv[1]);
+	erase.length=atoh(argv[2]);
+	erase.errorAddress=0;
+	DFlashErase(&erase);	
+	if(erase.errorcode != kFlashOk)
+	{
+		printf("errorcode=%d,errorAddress=%d\n",erase.errorcode,erase.errorAddress);
+	}	
 }
 static ShellCmdT dEraseInfo= {
 		dEraseFunc,
-		2,2,
+		3,3,
 		"derase",
 		"D-Flash erase",
-		"erase a D-Flash sector(256byte)\n",
+		"derase <address> <length(multiply 256)>\n",
 		{NULL,NULL}
 };
 
 static void dWriteFunc(int argc, char *argv[] ) 
 {
-	uint16_t buffer[24];
+	uint8_t buffer[24];
 	uint8_t i;
-	uint8_t count;
-	count=argc-2;
-	for(i=0;i<count;i++)
+	tFlashParam write;
+	write.address=atoh(argv[1]);
+	write.length=argc-2;
+	write.data=buffer;
+	write.errorAddress=0;
+	memset(buffer,0,sizeof(buffer));
+	for(i=0;i<write.length;i++)
 	{	
-		buffer[i]=atoh(argv[2+i]);
+		buffer[i]=(uint8_t)atoh(argv[2+i]);
 	}
-	DFlash_write(atoh(argv[1]),buffer,count);		 	
+	DFlashWrite(&write);
+	if(write.errorcode != kFlashOk)
+	{
+		printf("errorcode=%d,errorAddress=%d\n",write.errorcode,write.errorAddress);
+	}	
 }
 static ShellCmdT dWriteInfo= {
 		dWriteFunc,
 		3,25,
 		"dwrite",
 		"Write data to a D-Flash sector(256byte)",
-		"1:dwrite 2:address 3...:writed data\n",
+		"dwrite <address> <...:writed data>\n",
 		{NULL,NULL}
 };
 
 static void dReadFunc(int argc, char *argv[] ) 
 {
 	char *str;
-	uint8_t i; 
-	uint16_t* pReadData;
+	uint8_t buffer[16];
+	uint16_t *pBuffer=&buffer[0];
+	uint8_t doCount=0;
 	uint8_t count;
+	uint8_t i=0;
+	uint16_t address;
+	tFlashParam read;
 	count=(uint8_t)(atoiM(argv[2]));
-	pReadData=DFlash_Read(atoh(argv[1]),count);
-	for(i=0;i<count;i++)
+	address=atoh(argv[1]);	
+	while(count >0)
 	{
-		str = htoa(*pReadData);
-		if((0 == (i % 8)) && (i>0))
+		doCount=(count>16 ? 16 : count)/2;
+		read.length=doCount;
+		read.address=address;
+    	read.data=pBuffer;
+		DFlashRead(&read);
+		for(i=0;i<doCount*2;i++)
 		{
-			printf("\n");
+			str = htoa(*pBuffer);
+			printf("%s ",str);
+			pBuffer++;
 		}
-		printf("%s ",str);
-		pReadData++;
-		 	
+		pBuffer=&buffer[0];
+		printf("\n");
+		count=count-doCount*2;
+		if(8==doCount)
+		{
+		 	address+=2*doCount;
+		}
+		if(read.errorcode != kFlashOk)
+		{
+			printf("errorcode=%d\n",read.errorcode);
+		}	
 	}
-	printf("\n");
+	
 }
 static ShellCmdT dReadInfo= {
 		dReadFunc,
-		2,10,
+		3,10,
 		"dread",
 		"read data from a D-Flash sector",
-		"1:dread 2:address 3:read count\n",
+		"dread <address> <read count>\n",
 		{NULL,NULL}
 };
-
-
 
 void Cmd_Init(void)
 {
