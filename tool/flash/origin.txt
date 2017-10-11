@@ -1,0 +1,21 @@
+SPI operation in wait mode is a configurable low power mode, controlled by the SPISWAI bit
+located in the SPICR2 register. In wait mode, if the SPISWAI bit is clear, the SPI operates like in
+run mode. If the SPISWAI bit is set, the SPI goes into a power conservative state, with the SPI clock
+generation turned off. If the SPI is configured as a master, any transmission in progress stops, but
+is resumed after CPU goes into run mode. If the SPI is configured as a slave, reception and
+transmission of data continues, so that the slave stays synchronized to the master.
+ Stop mode
+The SPI is inactive in stop mode for reduced power consumption. If the SPI is configured as a
+master, any transmission in progress stops, but is resumed after CPU goes into run mode. If the SPI
+is configured as a slave, reception and transmission of data continues, so that the slave stays
+synchronized to the master.
+SPI operation in wait mode is a configurable low power mode, controlled by the SPISWAI bit
+located in the SPICR2 register. In wait mode, if the SPISWAI bit is clear, the SPI operates like in
+run mode. If the SPISWAI bit is set, the SPI goes into a power conservative state, with the SPI clock
+generation turned off. If the SPI is configured as a master, any transmission in progress stops, but
+is resumed after CPU goes into run mode. If the SPI is configured as a slave, reception and
+transmission of data continues, so that the slave stays synchronized to the master. Stop mode
+The SPI is inactive in stop mode for reduced power consumption. If the SPI is configured as a
+master, any transmission in progress stops, but is resumed after CPU goes into run mode. If the SPI
+is configured as a slave, reception and transmission of data continues, so that the slave stays
+synchronized to the master.
