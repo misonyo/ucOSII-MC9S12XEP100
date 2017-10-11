@@ -13,7 +13,7 @@ static uint8_t timer[eLed_StatusMax]={0,0,0,0,0,0};
 static uint8_t AtdTimer=0;
 static const uint8_t led_duty[eLed_StatusMax]={25,0,25,12,8,6};
 static const uint8_t led_period[eLed_StatusMax]={25-1,255,50-1,25-1,16-1,12-1};
-static uint8_t eLed_complex_st=eLed_1HZ;	//¸´ÖÆ×´Ì¬³õÊ¼1HZ
+static uint8_t eLed_complex_st=eLed_1HZ;	//¸´ÔÓ×´Ì¬³õÊ¼1HZ
 static uint8_t eLed_complex_st_ct=0;
 static volatile uint8_t duty0=20;
 static volatile uint8_t duty1=20;
@@ -125,7 +125,7 @@ void led_periodic_task(void)
 			break;
 	}
 	AtdTimer++;
-	if(AtdTimer=5)
+	if(5 == AtdTimer)
 	{
 		AtdTimer=0;
 		AtdResult0=atd_capture(0);

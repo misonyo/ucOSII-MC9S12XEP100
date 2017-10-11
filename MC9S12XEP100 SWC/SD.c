@@ -11,9 +11,9 @@ static void delay1ms(unsigned int n)
 /*************************************************************/
 void SPI_Init(void) 
 {
-  DDRS    = 0xE0;    
-  SPI0CR2 = 0x10;
-  SPI0CR1 = 0x5e;
+  DDRS    = 0xE0; /*高3位为1,1 Associated pin is configured as output.*/    
+  SPI0CR2 = 0x10;	/*SS port pin with MODF feature*/
+  SPI0CR1 = 0x5e;	/* 0b0101 1110,SPI is in master mode*/
   SPI0BR  = 0x45; //设置波特率为100k                  
 }
 
@@ -51,9 +51,9 @@ void clear_buffer(byte buffer[])
 /*************************************************************/
 byte SPI_Byte(byte value)
 {
-	while (!SPI0SR_SPTEF);
+	while (!SPI0SR_SPTEF); /* 1 SPI data register empty*/
 	SPI0DR = value;
-	while(!(SPI0SR_SPIF));
+	while(!(SPI0SR_SPIF)); /*1 New data copied to SPIDR.*/
 	return SPI0DR;
 }
 
@@ -139,7 +139,7 @@ byte read_block(long sector, byte* buffer)
 	SPI_Byte(0xff);              
 	SPI_Byte(0xff);  	
 	SD_deselect();
-  SPI_Byte(0xff);              
+  	SPI_Byte(0xff);              
 	return 0;
 } 
 

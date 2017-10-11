@@ -14,7 +14,9 @@
 #define FlashInitOk 0xA5
 #define FlashInitFailed 0x5A
 #define DFLASH_IS_ERASE_ADDRESS_ALIGNED(a)  ( 0 == ((DFLASH_ERASE_SECTOR_SIZE-1)&(a)) )
-#define DFLASH_IS_ERASE_ADDRESS_OK(a)  ( ((a) < DFLASH_END ) && ((a) >= DFLASH_START ))
+#define DFLASH_IS_WRITE_ADDRESS_ALIGNED(a)  ( 0 == (a & 0x01))
+#define DFLASH_IS_READ_ADDRESS_ALIGNED(a)  ( 0 == (a & 0x01))
+#define DFLASH_IS_ADDRESS_OK(a)  ( ((a) < DFLASH_END ) && ((a) >= DFLASH_START ))
 static unsigned char FlashInitStatus=FlashInitFailed;
 
 void DFlashInit(tFlashParam* FlashParam)
@@ -65,12 +67,12 @@ void DFlashErase(tFlashParam* FlashParam)	/*擦除DFLASH的一个分区*/
 	if(FlashInitStatus == FlashInitOk)
 	{
 		if((FALSE == DFLASH_IS_ERASE_ADDRESS_ALIGNED(address)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address)))
+			(FALSE == DFLASH_IS_ADDRESS_OK(address)))
 		{
 			FlashParam->errorcode=kFlashInvalidAddress;
 		}
 		else if((FALSE == DFLASH_IS_ERASE_ADDRESS_ALIGNED(length)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address+length)))
+			(FALSE == DFLASH_IS_ADDRESS_OK(address+length)))
 		{
 			FlashParam->errorcode=kFlashInvalidSize;
 		}
@@ -119,8 +121,9 @@ void DFlashErase(tFlashParam* FlashParam)	/*擦除DFLASH的一个分区*/
 
 void DFlashWrite(tFlashParam* FlashParam)	/*向DFLASH写入数据 */
 {
-	uint8_t doCount=0;
-	uint8_t index=0,i;
+	uint8_t doCount=0;	/*每次循环最多写4 word(8 byte)*/
+	uint8_t i;
+	uint8_t count=0;	/*have writed word(2 byte)*/
 	tAddress address;
 	tLength length;
 	tData *data;
@@ -133,13 +136,13 @@ void DFlashWrite(tFlashParam* FlashParam)	/*向DFLASH写入数据 */
 	data=FlashParam->data;
 	if(FlashInitStatus == FlashInitOk)
 	{
-		if((FALSE == DFLASH_IS_ERASE_ADDRESS_ALIGNED(address)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address)))
+		if((FALSE == DFLASH_IS_WRITE_ADDRESS_ALIGNED(address)) ||
+			(FALSE == DFLASH_IS_ADDRESS_OK(address)))
 		{
 			FlashParam->errorcode=kFlashInvalidAddress;
 		}
 		else if((0 != (length % 2)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address+length)))
+			(FALSE == DFLASH_IS_ADDRESS_OK(address+length)))
 		{
 			FlashParam->errorcode=kFlashInvalidSize;
 		}
@@ -163,11 +166,10 @@ void DFlashWrite(tFlashParam* FlashParam)	/*向DFLASH写入数据 */
 				FCCOB=address & 0x0000FFFF;         //写入低16位地址
 				for(i=0;i<doCount;i++)
 				{
-					FCCOBIX_CCOBIX=0x02+i;  //写入第i个数据
-					FCCOB=(uint16_t)(*data << 8); /* 保存到高8位 */
-					data++;
-					FCCOB |= (uint16_t)(*data); /* 保存到低8位 */
-					data++;
+					FCCOBIX_CCOBIX=0x02+i;
+					FCCOB=(uint16_t)(*(data+2*count) << 8); /* 保存到高8位 */
+					FCCOB |= (uint16_t)(*(data+(2*count+1))); /* 保存到低8位 */
+					count++;
 				}
 				length-=doCount*2;
 				address+=doCount*2;
@@ -176,26 +178,24 @@ void DFlashWrite(tFlashParam* FlashParam)	/*向DFLASH写入数据 */
 			}
 			address=FlashParam->address;
 			length=FlashParam->length;
-			data=FlashParam->data;
 			for(i=0;i<(length/2);i++)
 			{
 				epage = (byte)((DFLASH_LOWEST_START_PAGE)+(address >>10));   //计算EPAGE
 				EPAGE=epage;                                                     //给EPAGE赋值
 				ReadData = readWord((address & (DFLASH_PAGE_SIZE - 1)) + DFLASH_PAGE_WINDOW_START);  //读取页面窗口中的数据
-				if(((ReadData >> 8) != *data)) 
+				if((ReadData >> 8) != *(data+2*i)) 
 				{
 					FlashParam->errorAddress=address;
 					FlashParam->errorcode = kFlashFailed;
 					break;
 				}
-			    if(((ReadData << 8) != *(++data)))
+			    if((ReadData << 8) != *(data+(2*i+1)))
 				{
 					FlashParam->errorAddress=address;
 					FlashParam->errorcode = kFlashFailed;
 					break;
 				}
 				address+=2;
-				data++;
 			}
 			EPAGE= lastepage;       //恢复EPAGE的值
 			FlashParam->errorcode = kFlashOk;
@@ -211,23 +211,23 @@ void DFlashRead(tFlashParam* FlashParam)
 	uint8_t lastepage;          //用于存储EPAGE的值
 	uint8_t epage;              //用于计算EPAGE的值
 	uint8_t i;
+	uint16_t ReadData;
 	tAddress address;
 	tLength length;
 	tData *data;
-	uint16_t ReadData;
 	lastepage = EPAGE;   //保存EPAGE的值
 	address=FlashParam->address;
-	length=FlashParam->length;
+	length=(FlashParam->length)/2;
 	data=FlashParam->data;
 	if(FlashInitStatus == FlashInitOk)
 	{
-		if((FALSE == DFLASH_IS_ERASE_ADDRESS_ALIGNED(address)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address)))
+		if((FALSE == DFLASH_IS_READ_ADDRESS_ALIGNED(address)) ||
+		FALSE == DFLASH_IS_ADDRESS_OK(address))
 		{
 			FlashParam->errorcode=kFlashInvalidAddress;
 		}
 		else if((0 != (length % 2)) ||
-			(FALSE == DFLASH_IS_ERASE_ADDRESS_OK(address+length)))
+			(FALSE == DFLASH_IS_ADDRESS_OK(address+length)))
 		{
 			FlashParam->errorcode=kFlashInvalidSize;
 		}
@@ -243,10 +243,8 @@ void DFlashRead(tFlashParam* FlashParam)
 				EPAGE=epage;                                                     //给EPAGE赋值
 				ReadData= readWord((address & (DFLASH_PAGE_SIZE - 1)) + DFLASH_PAGE_WINDOW_START);  //读取页面窗口中的数据
 				address+=2;
-				*data=ReadData >> 8;
-				data++;
-				*data=ReadData << 8;
-				data++;
+				*(data+2*i)=(ReadData & 0xff00) >> 8;
+				*(data+(2*i+1))=ReadData & 0x00ff;
 			}
 			EPAGE= lastepage;       //恢复EPAGE的值
 			FlashParam->errorcode = kFlashOk;

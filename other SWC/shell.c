@@ -282,7 +282,7 @@ int SHELL_RunCmd(const char *cmdArgs, int *cmdRv ) {
 }
 
 static void doPrompt( void ) {
-	SHELL_puts("[AS] $ ");
+	SHELL_printf("lj $ ");
 }
 
 

@@ -16,8 +16,10 @@ void TERMIO_PutChar(char data)
  #if OS_CRITICAL_METHOD == 3                                /* Allocate storage for CPU status register */
     OS_CPU_SR  cpu_sr;
 #endif
-	while(SendCacheCount >= 1024); /* wait cache empty in case of full */
-	
+	while(SendCacheCount >= 1024) 
+	{
+		OSTimeDly(1); /* wait cache empty in case of full */
+	}
 	if(data == '\n')
 	{
 		TERMIO_PutChar('\r');
@@ -75,8 +77,7 @@ void sci_printf(void)
 }
 
 void sci_int_receive(void)
-{    
-	//while(RecvCacheCount >= 1024);
+{
 	if(SCI0SR1_RDRF)	/*1:Received data available in SCI data register*/
 	{
 		*RecvCacheIn=SCI0DRL;

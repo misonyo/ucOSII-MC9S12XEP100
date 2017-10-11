@@ -85,7 +85,7 @@ DSTATUS disk_initialize (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_read (
-	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
+	BYTE pdrv,		/* Physical drive number to identify the drive */
 	BYTE *buff,		/* Data buffer to store read data */
 	DWORD sector,	/* Start sector in LBA */
 	UINT count		/* Number of sectors to read */
@@ -134,7 +134,7 @@ DRESULT disk_read (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_write (
-	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
+	BYTE pdrv,			/* Physical drive number to identify the drive */
 	const BYTE *buff,	/* Data to be written */
 	DWORD sector,		/* Start sector in LBA */
 	UINT count			/* Number of sectors to write */
@@ -148,7 +148,20 @@ DRESULT disk_write (
 
 	case DEV_MMC :
 	{
-		res = RES_OK;
+		UINT i;
+		byte ret=0;
+		for(i=0;(i<count)&&(ret==0);i++)
+		{
+			ret = write_block(sector,buff+i*512);
+		}
+		if(ret == 0)
+		{
+			res = RES_OK;
+		}
+		else
+		{
+			res = RES_ERROR;
+		}
 		break;
 	}
 	case DEV_USB :
@@ -165,7 +178,7 @@ DRESULT disk_write (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_ioctl (
-	BYTE pdrv,		/* Physical drive nmuber (0..) */
+	BYTE pdrv,		/* Physical drive number (0..) */
 	BYTE cmd,		/* Control code */
 	void *buff		/* Buffer to send/receive control data */
 )

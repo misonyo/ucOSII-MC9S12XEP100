@@ -6,7 +6,7 @@
 
 void sci_init(void)
 {
-	SCI0BD = BUS_CLOCK/16/115200;   //设置SCI0波特率为115200
+	SCI0BD = BUS_CLOCK/16/57600;   //设置SCI0波特率为115200
 	SCI0CR1 = 0x00;       //设置SCI0为正常模式，八位数据位，无奇偶校验
 	SCI0CR2 = 0b00101100;       //允许发送数据和接受数据,enable interrupts 
 }

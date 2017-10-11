@@ -175,7 +175,7 @@ static ShellCmdT dEraseInfo= {
 
 static void dWriteFunc(int argc, char *argv[] ) 
 {
-	uint8_t buffer[24];
+	tData buffer[24];
 	uint8_t i;
 	tFlashParam write;
 	write.address=atoh(argv[1]);
@@ -185,7 +185,7 @@ static void dWriteFunc(int argc, char *argv[] )
 	memset(buffer,0,sizeof(buffer));
 	for(i=0;i<write.length;i++)
 	{	
-		buffer[i]=(uint8_t)atoh(argv[2+i]);
+		buffer[i]=(tData)atoh(argv[2+i]);
 	}
 	DFlashWrite(&write);
 	if(write.errorcode != kFlashOk)
@@ -195,7 +195,7 @@ static void dWriteFunc(int argc, char *argv[] )
 }
 static ShellCmdT dWriteInfo= {
 		dWriteFunc,
-		3,25,
+		3,26,
 		"dwrite",
 		"Write data to a D-Flash sector(256byte)",
 		"dwrite <address> <...:writed data>\n",
@@ -204,42 +204,45 @@ static ShellCmdT dWriteInfo= {
 
 static void dReadFunc(int argc, char *argv[] ) 
 {
-	char *str;
-	uint8_t buffer[16];
-	uint16_t *pBuffer=&buffer[0];
-	uint8_t doCount=0;
-	uint8_t count;
 	uint8_t i=0;
-	uint16_t address;
+	tData buffer[32];
+	tLength doLength=0;
+	tLength length;
+	tAddress address;
 	tFlashParam read;
-	count=(uint8_t)(atoiM(argv[2]));
+	length=atoh(argv[2]);
 	address=atoh(argv[1]);	
-	while(count >0)
+	while(length >0)
 	{
-		doCount=(count>16 ? 16 : count)/2;
-		read.length=doCount;
+		doLength=length>32 ? 32 : length;
+		read.length=doLength;
 		read.address=address;
-    	read.data=pBuffer;
+    	read.data=buffer;
 		DFlashRead(&read);
-		for(i=0;i<doCount*2;i++)
+		for(i=0;i<doLength;i++)
 		{
-			str = htoa(*pBuffer);
-			printf("%s ",str);
-			pBuffer++;
+			printf("%02X ",(unsigned int)(*(buffer+i)));
 		}
-		pBuffer=&buffer[0];
+		printf("\t");
+		for(i=0;i<doLength;i++)
+		{
+			if(isprint(*(buffer+i)))
+			{
+				printf("%c",*(buffer+i));
+			}
+			else
+			{
+				printf(".");
+			}
+		}
 		printf("\n");
-		count=count-doCount*2;
-		if(8==doCount)
-		{
-		 	address+=2*doCount;
-		}
+		length=length-doLength;
+		address+=doLength;
 		if(read.errorcode != kFlashOk)
 		{
 			printf("errorcode=%d\n",read.errorcode);
 		}	
-	}
-	
+	}	
 }
 static ShellCmdT dReadInfo= {
 		dReadFunc,
